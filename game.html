@@ -1,0 +1,1446 @@
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>随机选片游戏 - 心情影视剧推荐</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- AOS 动画库 -->
+    <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+    
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#8b5cf6',
+                        dark: '#1e1b4b',
+                        light: '#e0e7ff',
+                        happy: '#fbbf24',
+                        sad: '#60a5fa',
+                        angry: '#f87171',
+                        anxious: '#a78bfa',
+                        excited: '#34d399',
+                        calm: '#93c5fd',
+                        romantic: '#f472b6',
+                        nostalgic: '#d97706'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'spin-slow': 'spin 3s linear infinite',
+                        'bounce-slow': 'bounce 2s infinite',
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            }
+            .card-hover {
+                @apply transition-all duration-300 hover:scale-105 hover:shadow-xl;
+            }
+            .glass {
+                @apply bg-white/10 backdrop-blur-md border border-white/20;
+            }
+            .game-card {
+                @apply relative rounded-2xl overflow-hidden shadow-lg transition-all duration-500 hover:shadow-2xl cursor-pointer;
+            }
+            .game-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            }
+            .game-card:hover::before {
+                opacity: 1;
+            }
+            .slot-machine {
+                @apply relative;
+            }
+            .slot-reel {
+                @apply flex flex-col items-center justify-center transition-transform duration-300;
+            }
+            .fishing-rod {
+                @apply transform transition-transform duration-500;
+            }
+            .claw-machine {
+                @apply relative;
+            }
+            .claw {
+                @apply transform transition-transform duration-500;
+            }
+            .gashapon {
+                @apply relative;
+            }
+            .capsule {
+                @apply transform transition-transform duration-500;
+            }
+            .filter-tag {
+                @apply bg-gray-800/50 border border-gray-700 hover:bg-primary/50 hover:border-primary;
+            }
+            .filter-tag.active {
+                @apply bg-primary border-primary text-white;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-800 text-white min-h-screen">
+
+    <!-- 导航栏 -->
+    <header class="relative z-10 glass sticky top-0 z-50">
+        <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-film text-primary text-2xl"></i>
+                <h1 class="text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text" style="color: rgba(191, 163, 163, 0);">MoodChips</h1>
+            </div>
+            <div class="hidden md:flex items-center space-x-6">
+                <a href="index.html" class="hover:text-primary transition-colors">首页</a>
+                <a href="index.html#moods" class="hover:text-primary transition-colors">选择心情</a>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="index.html" class="p-2 rounded-full hover:bg-gray-800 transition-colors" title="返回首页">
+                    <i class="fa fa-home text-xl"></i>
+                </a>
+                <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-800 transition-colors">
+                    <i class="fa fa-sun-o"></i>
+                </button>
+                <button id="mobile-menu-button" class="md:hidden p-2 rounded-full hover:bg-gray-800 transition-colors">
+                    <i class="fa fa-bars"></i>
+                </button>
+            </div>
+        </nav>
+        <!-- 移动端菜单 -->
+        <div id="mobile-menu" class="hidden md:hidden container mx-auto px-4 pb-4">
+            <a href="index.html" class="block py-2 hover:text-primary transition-colors">首页</a>
+            <a href="index.html#moods" class="block py-2 hover:text-primary transition-colors">选择心情</a>
+        </div>
+    </header>
+
+    <!-- 游戏选择区 -->
+    <section class="relative z-10 container mx-auto px-4 py-16">
+        <div class="text-center mb-12" data-aos="fade-up">
+            <h2 class="text-4xl md:text-5xl font-bold mb-4">
+                🎮 <span class="bg-gradient-to-r from-primary to-secondary text-transparent bg-clip-text">随机选片游戏</span> 🎮
+            </h2>
+            <p class="text-xl text-gray-300">不知道看什么？让命运来决定！选择你喜欢的游戏方式，随机获取影视推荐</p>
+        </div>
+
+        <!-- Filter筛选区 -->
+        <div class="max-w-4xl mx-auto mb-12" data-aos="fade-up" data-aos-delay="50">
+            <div class="glass rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold flex items-center">
+                        <i class="fa fa-filter mr-2 text-primary"></i>
+                        筛选范围
+                    </h3>
+                    <button id="clear-filters" class="text-sm text-gray-400 hover:text-primary transition-colors">
+                        <i class="fa fa-times mr-1"></i>清除筛选
+                    </button>
+                </div>
+                
+                <!-- 情绪筛选 -->
+                <div class="mb-6">
+                    <h4 class="text-sm font-semibold text-gray-400 mb-3">按情绪筛选</h4>
+                    <div class="flex flex-wrap gap-2" id="mood-filters">
+                        <button class="filter-tag mood-tag px-4 py-2 rounded-full text-sm transition-all" data-mood="happy">
+                            😊 开心
+                        </button>
+                        <button class="filter-tag mood-tag px-4 py-2 rounded-full text-sm transition-all" data-mood="sad">
+                            😢 难过
+                        </button>
+                        <button class="filter-tag mood-tag px-4 py-2 rounded-full text-sm transition-all" data-mood="angry">
+                            😠 愤怒
+                        </button>
+                        <button class="filter-tag mood-tag px-4 py-2 rounded-full text-sm transition-all" data-mood="anxious">
+                            😰 焦虑
+                        </button>
+                        <button class="filter-tag mood-tag px-4 py-2 rounded-full text-sm transition-all" data-mood="excited">
+                            🤩 兴奋
+                        </button>
+                        <button class="filter-tag mood-tag px-4 py-2 rounded-full text-sm transition-all" data-mood="calm">
+                            😌 平静
+                        </button>
+                        <button class="filter-tag mood-tag px-4 py-2 rounded-full text-sm transition-all" data-mood="romantic">
+                            😍 浪漫
+                        </button>
+                        <button class="filter-tag mood-tag px-4 py-2 rounded-full text-sm transition-all" data-mood="nostalgic">
+                            🥺 怀旧
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 类型筛选 -->
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-400 mb-3">按类型筛选</h4>
+                    <div class="flex flex-wrap gap-2" id="genre-filters">
+                        <button class="filter-tag genre-tag px-4 py-2 rounded-full text-sm transition-all" data-genre="喜剧">
+                            🎭 喜剧
+                        </button>
+                        <button class="filter-tag genre-tag px-4 py-2 rounded-full text-sm transition-all" data-genre="剧情">
+                            📖 剧情
+                        </button>
+                        <button class="filter-tag genre-tag px-4 py-2 rounded-full text-sm transition-all" data-genre="爱情">
+                            💕 爱情
+                        </button>
+                        <button class="filter-tag genre-tag px-4 py-2 rounded-full text-sm transition-all" data-genre="悬疑">
+                            🔍 悬疑
+                        </button>
+                        <button class="filter-tag genre-tag px-4 py-2 rounded-full text-sm transition-all" data-genre="古装">
+                            👘 古装
+                        </button>
+                        <button class="filter-tag genre-tag px-4 py-2 rounded-full text-sm transition-all" data-genre="奇幻">
+                            ✨ 奇幻
+                        </button>
+                        <button class="filter-tag genre-tag px-4 py-2 rounded-full text-sm transition-all" data-genre="武侠">
+                            ⚔️ 武侠
+                        </button>
+                        <button class="filter-tag genre-tag px-4 py-2 rounded-full text-sm transition-all" data-genre="都市">
+                            🏙️ 都市
+                        </button>
+                        <button class="filter-tag genre-tag px-4 py-2 rounded-full text-sm transition-all" data-genre="家庭">
+                            👨‍👩‍👧‍👦 家庭
+                        </button>
+                        <button class="filter-tag genre-tag px-4 py-2 rounded-full text-sm transition-all" data-genre="青春">
+                            🌸 青春
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 已选筛选提示 -->
+                <div id="filter-status" class="mt-4 text-center text-sm text-gray-400 hidden">
+                    <span id="selected-count">0</span> 个筛选条件已选中
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <!-- 老虎机 -->
+            <div class="game-card bg-gradient-to-br from-yellow-500 to-orange-600 p-8 min-h-[300px] flex flex-col items-center justify-center" data-aos="fade-up" data-aos-delay="0" onclick="openGame('slot')">
+                <div class="text-6xl mb-4">🎰</div>
+                <h3 class="text-2xl font-bold mb-2">老虎机</h3>
+                <p class="text-center text-white/90">转动命运的轮盘，让幸运为你选择今晚的影视</p>
+                <div class="mt-4 flex space-x-2">
+                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-2xl">🎬</div>
+                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-2xl">🎭</div>
+                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-2xl">🌟</div>
+                </div>
+            </div>
+
+            <!-- 钓鱼 -->
+            <div class="game-card bg-gradient-to-br from-blue-500 to-cyan-600 p-8 min-h-[300px] flex flex-col items-center justify-center" data-aos="fade-up" data-aos-delay="100" onclick="openGame('fishing')">
+                <div class="text-6xl mb-4">🎣</div>
+                <h3 class="text-2xl font-bold mb-2">钓鱼</h3>
+                <p class="text-center text-white/90">抛下鱼竿，等待惊喜上钩，钓到什么看什么</p>
+                <div class="mt-4 flex space-x-2">
+                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-2xl">🐟</div>
+                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-2xl">🐠</div>
+                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-2xl">🐡</div>
+                </div>
+            </div>
+
+            <!-- 抓娃娃 -->
+            <div class="game-card bg-gradient-to-br from-pink-500 to-rose-600 p-8 min-h-[300px] flex flex-col items-center justify-center" data-aos="fade-up" data-aos-delay="200" onclick="openGame('claw')">
+                <div class="text-6xl mb-4">🧸</div>
+                <h3 class="text-2xl font-bold mb-2">抓娃娃</h3>
+                <p class="text-center text-white/90">操控爪子，抓住你心仪的影视推荐</p>
+                <div class="mt-4 flex space-x-2">
+                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-2xl">🎁</div>
+                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-2xl">🎀</div>
+                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-2xl">💝</div>
+                </div>
+            </div>
+
+            <!-- 扭蛋 -->
+            <div class="game-card bg-gradient-to-br from-purple-500 to-indigo-600 p-8 min-h-[300px] flex flex-col items-center justify-center" data-aos="fade-up" data-aos-delay="300" onclick="openGame('gashapon')">
+                <div class="text-6xl mb-4">🥚</div>
+                <h3 class="text-2xl font-bold mb-2">扭蛋</h3>
+                <p class="text-center text-white/90">扭动把手，惊喜蛋里藏着你的专属推荐</p>
+                <div class="mt-4 flex space-x-2">
+                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-2xl">🔮</div>
+                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-2xl">✨</div>
+                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-2xl">💫</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 游戏模态框 -->
+    <div id="game-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" id="game-modal-backdrop"></div>
+        <div class="relative bg-gray-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <button id="close-game-modal" class="absolute top-4 right-4 z-10 bg-gray-800 hover:bg-gray-700 p-2 rounded-full transition-colors">
+                <i class="fa fa-times"></i>
+            </button>
+            <div id="game-content" class="p-6">
+                <!-- 游戏内容将通过JS动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="relative z-10 bg-gray-900/80 backdrop-blur-md py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <i class="fa fa-film text-primary text-2xl"></i>
+                        <h3 class="text-xl font-bold">心情影视剧推荐</h3>
+                    </div>
+                    <p class="text-gray-400">
+                        找到适合你当前心情的影视剧，让观影成为一种情感体验
+                    </p>
+                </div>
+
+            </div>
+            <div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500">
+                <p>© 2025 心情影视剧推荐. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // 初始化AOS动画库
+        document.addEventListener('DOMContentLoaded', function() {
+            AOS.init({
+                duration: 800,
+                easing: 'ease-in-out',
+                once: true
+            });
+            
+            // 移动端菜单切换
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            mobileMenuButton.addEventListener('click', function() {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            // 主题切换
+            const themeToggle = document.getElementById('theme-toggle');
+            const body = document.body;
+            const glassElements = document.querySelectorAll('.glass');
+            
+            // 初始化主题为明亮模式
+            body.classList.add('bg-gray-100', 'text-gray-900');
+            glassElements.forEach(element => {
+                element.classList.add('bg-black/10', 'border-black/20');
+            });
+            
+            themeToggle.addEventListener('click', function() {
+                const isDark = body.classList.toggle('dark-mode');
+                
+                if (isDark) {
+                    // 切换到黑夜模式
+                    body.classList.remove('bg-gray-100', 'text-gray-900');
+                    body.classList.add('bg-gray-800', 'text-white');
+                    themeToggle.innerHTML = '<i class="fa fa-moon-o"></i>';
+                    
+                    // 更新玻璃效果元素
+                    glassElements.forEach(element => {
+                        element.classList.remove('bg-black/10', 'border-black/20');
+                        element.classList.add('bg-white/10', 'border-white/20');
+                    });
+                } else {
+                    // 切换到明亮模式
+                    body.classList.remove('bg-gray-800', 'text-white');
+                    body.classList.add('bg-gray-100', 'text-gray-900');
+                    themeToggle.innerHTML = '<i class="fa fa-sun-o"></i>';
+                    
+                    // 更新玻璃效果元素
+                    glassElements.forEach(element => {
+                        element.classList.remove('bg-white/10', 'border-white/20');
+                        element.classList.add('bg-black/10', 'border-black/20');
+                    });
+                }
+            });
+            
+            // 游戏模态框控制
+            const gameModal = document.getElementById('game-modal');
+            const gameModalBackdrop = document.getElementById('game-modal-backdrop');
+            const closeGameModal = document.getElementById('close-game-modal');
+            
+            closeGameModal.addEventListener('click', function() {
+                gameModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            });
+            
+            gameModalBackdrop.addEventListener('click', function() {
+                gameModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            });
+            
+            // 筛选功能
+            const moodFilters = document.querySelectorAll('.mood-tag');
+            const genreFilters = document.querySelectorAll('.genre-tag');
+            const clearFiltersButton = document.getElementById('clear-filters');
+            const filterStatus = document.getElementById('filter-status');
+            const selectedCount = document.getElementById('selected-count');
+            
+            // 筛选状态
+            window.selectedMoods = [];
+            window.selectedGenres = [];
+            
+            // 更新筛选状态显示
+            function updateFilterStatus() {
+                const total = window.selectedMoods.length + window.selectedGenres.length;
+                selectedCount.textContent = total;
+                
+                if (total > 0) {
+                    filterStatus.classList.remove('hidden');
+                } else {
+                    filterStatus.classList.add('hidden');
+                }
+            }
+            
+            // 情绪筛选点击事件
+            moodFilters.forEach(tag => {
+                tag.addEventListener('click', function() {
+                    const mood = this.getAttribute('data-mood');
+                    
+                    if (this.classList.contains('active')) {
+                        // 取消选中
+                        this.classList.remove('active');
+                        window.selectedMoods = window.selectedMoods.filter(m => m !== mood);
+                    } else {
+                        // 选中
+                        this.classList.add('active');
+                        window.selectedMoods.push(mood);
+                    }
+                    
+                    updateFilterStatus();
+                });
+            });
+            
+            // 类型筛选点击事件
+            genreFilters.forEach(tag => {
+                tag.addEventListener('click', function() {
+                    const genre = this.getAttribute('data-genre');
+                    
+                    if (this.classList.contains('active')) {
+                        // 取消选中
+                        this.classList.remove('active');
+                        window.selectedGenres = window.selectedGenres.filter(g => g !== genre);
+                    } else {
+                        // 选中
+                        this.classList.add('active');
+                        window.selectedGenres.push(genre);
+                    }
+                    
+                    updateFilterStatus();
+                });
+            });
+            
+            // 清除筛选
+            clearFiltersButton.addEventListener('click', function() {
+                moodFilters.forEach(tag => tag.classList.remove('active'));
+                genreFilters.forEach(tag => tag.classList.remove('active'));
+                window.selectedMoods = [];
+                window.selectedGenres = [];
+                updateFilterStatus();
+            });
+        });
+        
+        // 影视剧数据
+        const moviesData = {
+            happy: {
+                categories: ['喜剧', '音乐剧', '动画', '奇幻', '冒险'],
+                movies: [
+                    {
+                        id: 1,
+                        title: '藏海传',
+                        poster: 'https://p26-doubao-search-sign.byteimg.com/labis/2be353189f1213167769d1cdb74834e9~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791820455&x-signature=y%2FXlgCEkCFnRsvJX6kCezVsO8fA%3D',
+                        rating: 9.2,
+                        year: 2025,
+                        genre: '古装, 权谋, 悬疑',
+                        director: '郑晓龙',
+                        actors: '肖战, 张婧仪, 周奇, 黄觉',
+                        description: '大雍国钦天监监正蒯铎之子稚奴，身负血海深仇，化名藏海回到京城，凭借正直、智慧、坚韧、努力，以及习得的营造技艺和纵横之术，一路智博奸佞，沉冤得雪。',
+                        trailer: '#'
+                    },
+                    {
+                        id: 2,
+                        title: '白月梵星',
+                        poster: 'https://p3-doubao-search-sign.byteimg.com/labis/image/eea93110dd625ea68ca0eefdc5f98069~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791820481&x-signature=TnmE8WsFD1X3aWAh2HrEkwJAqyg%3D',
+                        rating: 8.7,
+                        year: 2025,
+                        genre: '爱情, 奇幻, 剧情',
+                        director: '朱锐斌',
+                        actors: '白鹿, 敖瑞鹏, 代露娃, 常华森',
+                        description: '凡人少女白烁自小寻仙问道，在意外结识极域妖王梵樾后，二人共同踏上开启上古神物无念石之路，为集齐"爱恨杀贪善"五念，经历了种种考验，从互相利用到互生爱意、双向奔赴。',
+                        trailer: '#'
+                    },
+                    {
+                        id: 3,
+                        title: '大奉打更人',
+                        poster: 'https://p26-doubao-search-sign.byteimg.com/labis/11937e17e956dd7655106b47553b3634~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791820481&x-signature=I5apTnKFLCu7hksDlcuG6JBXcT8%3D',
+                        rating: 8.5,
+                        year: 2024,
+                        genre: '轻喜剧, 权谋, 探案',
+                        director: '王鹤棣',
+                        actors: '王鹤棣, 田曦薇',
+                        description: '融合轻喜剧、权谋、探案等多种元素，叙事轻松诙谐、节奏明快，打破了传统权谋剧的沉重感。主角团人设讨喜，互动笑点密集，剧情反转不断。',
+                        trailer: '#'
+                    },
+                    {
+                        id: 4,
+                        title: '赴山海',
+                        poster: 'https://p11-doubao-search-sign.byteimg.com/labis/1e383110aa164b08ad6307e8a9f620ce~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791820481&x-signature=ROQhccGTUXpZXtamSna2LCZrezE%3D',
+                        rating: 8.8,
+                        year: 2025,
+                        genre: '武侠, 穿书, 系统',
+                        director: '成毅',
+                        actors: '成毅, 古力娜扎',
+                        description: '讲述社畜穿越成自己笔下武侠主角，逆袭成为武林盟主的故事。开局高能、反转烧脑，打戏精益求精，名场面氛围感拉满。',
+                        trailer: '#'
+                    }
+                ]
+            },
+            sad: {
+                categories: ['剧情', '传记', '历史', '爱情', '家庭'],
+                movies: [
+                    {
+                        id: 5,
+                        title: '生万物',
+                        poster: 'https://p26-doubao-search-sign.byteimg.com/labis/image/81e57e594fb77ce950c8d2cbacaeaeb4~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791820455&x-signature=NOJ7ImYc2cgQ0uEwfxrlz3gSgnY%3D',
+                        rating: 9.0,
+                        year: 2025,
+                        genre: '年代, 剧情, 历史',
+                        director: '杨幂, 欧豪',
+                        actors: '杨幂, 欧豪, 林永健, 秦海璐, 倪大红',
+                        description: '以土地为纽带，串联起三个家族的恩怨情仇、小人物的悲欢离合，既有乱世中的坚守与成长，也有对土地、家国的深沉热爱。',
+                        trailer: '#'
+                    },
+                    {
+                        id: 6,
+                        title: '以法之名',
+                        poster: 'https://p11-doubao-search-sign.byteimg.com/labis/624afa9b38f423fc9143423da6a7ad57~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791820481&x-signature=5oHst9AK8VQVyt0hAYhAqCeY3L4%3D',
+                        rating: 9.1,
+                        year: 2025,
+                        genre: '法治, 剧情, 现实',
+                        director: '张译',
+                        actors: '张译, 李光洁, 薪欣',
+                        description: '聚焦法律从业者的真实日常，摒弃了悬浮的职场叙事，用一个个真实接地气的案件，展现法理与人情的博弈。',
+                        trailer: '#'
+                    },
+                    {
+                        id: 7,
+                        title: '朝雪录',
+                        poster: 'https://p26-doubao-search-sign.byteimg.com/labis/42cfaa0eda47a525870415738ab8de81~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1791820455&x-signature=O5L8gtwXO8Smo28P25leqcJS1ro%3D',
+                        rating: 8.9,
+                        year: 2025,
+                        genre: '悬疑, 探案, 古风',
+                        director: '李兰迪',
+                        actors: '李兰迪, 敖瑞鹏',
+                        description: '主打悬疑探案+古风美学，剧情丝丝入扣、氛围拉满，没有流量加持，全靠质量逆袭。李兰迪、敖瑞鹏演技突破，角色适配度极高。',
+                        trailer: '#'
+                    }
+                ]
+            }
+        };
+        
+        // 获取所有影视剧
+        function getAllMovies() {
+            const allMovies = [];
+            Object.keys(moviesData).forEach(mood => {
+                moviesData[mood].movies.forEach(movie => {
+                    allMovies.push(movie);
+                });
+            });
+            return allMovies;
+        }
+        
+        // 随机选择影视剧
+        function getRandomMovie() {
+            let filteredMovies = [];
+            
+            // 如果没有选择任何筛选条件，从所有影片中随机选择
+            if (window.selectedMoods.length === 0 && window.selectedGenres.length === 0) {
+                const allMovies = getAllMovies();
+                return allMovies[Math.floor(Math.random() * allMovies.length)];
+            }
+            
+            // 根据筛选条件筛选影片
+            // 如果选择了情绪筛选
+            if (window.selectedMoods.length > 0) {
+                window.selectedMoods.forEach(mood => {
+                    if (moviesData[mood]) {
+                        moviesData[mood].movies.forEach(movie => {
+                            // 检查是否已经添加过
+                            if (!filteredMovies.find(m => m.id === movie.id)) {
+                                // 如果还选择了类型筛选，检查类型是否匹配
+                                if (window.selectedGenres.length > 0) {
+                                    const movieGenres = movie.genre.split(',').map(g => g.trim());
+                                    const hasMatchingGenre = window.selectedGenres.some(genre => 
+                                        movieGenres.some(mg => mg.includes(genre))
+                                    );
+                                    if (hasMatchingGenre) {
+                                        filteredMovies.push(movie);
+                                    }
+                                } else {
+                                    filteredMovies.push(movie);
+                                }
+                            }
+                        });
+                    }
+                });
+            } else if (window.selectedGenres.length > 0) {
+                // 只选择了类型筛选，没有选择情绪筛选
+                const allMovies = getAllMovies();
+                allMovies.forEach(movie => {
+                    const movieGenres = movie.genre.split(',').map(g => g.trim());
+                    const hasMatchingGenre = window.selectedGenres.some(genre => 
+                        movieGenres.some(mg => mg.includes(genre))
+                    );
+                    if (hasMatchingGenre && !filteredMovies.find(m => m.id === movie.id)) {
+                        filteredMovies.push(movie);
+                    }
+                });
+            }
+            
+            // 如果筛选后没有结果，返回null
+            if (filteredMovies.length === 0) {
+                return null;
+            }
+            
+            // 从筛选后的影片中随机选择
+            return filteredMovies[Math.floor(Math.random() * filteredMovies.length)];
+        }
+        
+        // 打开游戏
+        function openGame(gameType) {
+            const gameModal = document.getElementById('game-modal');
+            const gameContent = document.getElementById('game-content');
+            
+            let content = '';
+            
+            switch(gameType) {
+                case 'slot':
+                    content = getSlotMachineContent();
+                    break;
+                case 'fishing':
+                    content = getFishingContent();
+                    break;
+                case 'claw':
+                    content = getClawMachineContent();
+                    break;
+                case 'gashapon':
+                    content = getGashaponContent();
+                    break;
+            }
+            
+            gameContent.innerHTML = content;
+            gameModal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            
+            // 初始化游戏
+            initGame(gameType);
+        }
+        
+        // 老虎机内容
+        function getSlotMachineContent() {
+            return `
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold mb-8">🎰 老虎机 🎰</h2>
+                    <p class="text-gray-300 mb-8">拉动拉杆，转动命运的轮盘！</p>
+                    
+                    <!-- 老虎机主体 -->
+                    <div class="relative inline-block mb-8">
+                        <!-- 老虎机外框 -->
+                        <div class="bg-gradient-to-b from-red-600 to-red-800 p-6 rounded-3xl shadow-2xl border-8 border-yellow-500">
+                            <!-- 老虎机顶部装饰 -->
+                            <div class="bg-gradient-to-r from-yellow-400 to-yellow-600 h-8 rounded-t-2xl mb-4 flex items-center justify-center">
+                                <span class="text-red-800 font-bold text-lg">LUCKY</span>
+                            </div>
+                            
+                            <!-- 转轮区域 -->
+                            <div class="bg-gray-900 p-4 rounded-2xl mb-4">
+                                <div class="flex justify-center items-center space-x-2">
+                                    <!-- 转轮1 -->
+                                    <div class="slot-window w-20 h-28 bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg overflow-hidden border-4 border-yellow-500 relative">
+                                        <div class="slot-reel-container absolute inset-0" id="reel-container-1">
+                                            <div class="slot-reel flex flex-col items-center justify-center h-full transition-transform duration-100" id="reel1">
+                                                <div class="slot-item h-28 flex items-center justify-center text-4xl">🎬</div>
+                                            </div>
+                                        </div>
+                                        <!-- 顶部和底部渐变遮罩 -->
+                                        <div class="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-gray-900 to-transparent pointer-events-none"></div>
+                                        <div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
+                                    </div>
+                                    
+                                    <!-- 转轮2 -->
+                                    <div class="slot-window w-20 h-28 bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg overflow-hidden border-4 border-yellow-500 relative">
+                                        <div class="slot-reel-container absolute inset-0" id="reel-container-2">
+                                            <div class="slot-reel flex flex-col items-center justify-center h-full transition-transform duration-100" id="reel2">
+                                                <div class="slot-item h-28 flex items-center justify-center text-4xl">�</div>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-gray-900 to-transparent pointer-events-none"></div>
+                                        <div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
+                                    </div>
+                                    
+                                    <!-- 转轮3 -->
+                                    <div class="slot-window w-20 h-28 bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg overflow-hidden border-4 border-yellow-500 relative">
+                                        <div class="slot-reel-container absolute inset-0" id="reel-container-3">
+                                            <div class="slot-reel flex flex-col items-center justify-center h-full transition-transform duration-100" id="reel3">
+                                                <div class="slot-item h-28 flex items-center justify-center text-4xl">🌟</div>
+                                            </div>
+                                        </div>
+                                        <div class="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-gray-900 to-transparent pointer-events-none"></div>
+                                        <div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 中间高亮线 -->
+                                <div class="absolute top-1/2 left-0 right-0 h-1 bg-yellow-400 opacity-50 transform -translate-y-1/2 pointer-events-none"></div>
+                            </div>
+                            
+                            <!-- 底部装饰 -->
+                            <div class="bg-gradient-to-r from-yellow-400 to-yellow-600 h-4 rounded-b-2xl"></div>
+                        </div>
+                        
+                        <!-- 拉杆 -->
+                        <div class="absolute -right-16 top-1/2 transform -translate-y-1/2">
+                            <div class="relative">
+                                <!-- 拉杆底座 -->
+                                <div class="w-8 h-16 bg-gradient-to-b from-gray-600 to-gray-800 rounded-lg"></div>
+                                <!-- 拉杆杆身 -->
+                                <div id="lever-stick" class="absolute bottom-12 left-1/2 transform -translate-x-1/2 w-4 h-20 bg-gradient-to-b from-gray-400 to-gray-600 rounded-full transition-transform duration-300 origin-bottom">
+                                    <!-- 拉杆手柄 -->
+                                    <div id="lever-handle" class="absolute -top-6 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-gradient-to-b from-red-500 to-red-700 rounded-full shadow-lg cursor-pointer border-4 border-red-400 flex items-center justify-center">
+                                        <span class="text-white text-2xl">👇</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 操作按钮 -->
+                    <div class="mb-8">
+                        <button id="spin-button" class="bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-orange-600 hover:to-yellow-500 text-white font-bold py-4 px-12 rounded-full transition-all duration-300 transform hover:scale-105 text-xl shadow-lg">
+                            🎲 拉动拉杆
+                        </button>
+                    </div>
+                    
+                    <div id="slot-result" class="mt-8 hidden">
+                        <!-- 结果将在这里显示 -->
+                    </div>
+                </div>
+                
+                <style>
+                    .slot-window {
+                        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+                    }
+                    
+                    .slot-reel {
+                        will-change: transform;
+                    }
+                    
+                    .slot-item {
+                        flex-shrink: 0;
+                    }
+                    
+                    @keyframes spin {
+                        0% { transform: translateY(0); }
+                        100% { transform: translateY(-100%); }
+                    }
+                    
+                    .spinning {
+                        animation: spin 0.1s linear infinite;
+                    }
+                    
+                    #lever-stick.pulled {
+                        transform: rotate(-30deg);
+                    }
+                </style>
+            `;
+        }
+        
+        // 钓鱼内容
+        function getFishingContent() {
+            return `
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold mb-6">🎣 钓鱼 🎣</h2>
+                    <p class="text-gray-300 mb-6">选择鱼饵，操纵鱼竿，甩线钓鱼！</p>
+                    
+                    <!-- 鱼饵选择 -->
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold mb-3">选择鱼饵：</h3>
+                        <div class="flex justify-center gap-3" id="bait-selection">
+                            <button class="bait-btn px-4 py-2 rounded-full bg-gray-700 hover:bg-blue-600 transition-all" data-bait="worm" title="蚯蚓">
+                                🪱 蚯蚓
+                            </button>
+                            <button class="bait-btn px-4 py-2 rounded-full bg-gray-700 hover:bg-blue-600 transition-all" data-bait="fish" title="小鱼">
+                                🐟 小鱼
+                            </button>
+                            <button class="bait-btn px-4 py-2 rounded-full bg-gray-700 hover:bg-blue-600 transition-all" data-bait="shrimp" title="虾">
+                                🦐 虾
+                            </button>
+                            <button class="bait-btn px-4 py-2 rounded-full bg-gray-700 hover:bg-blue-600 transition-all" data-bait="corn" title="玉米">
+                                🌽 玉米
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-400 mt-2" id="bait-hint">选择不同的鱼饵会吸引不同的鱼哦！</p>
+                    </div>
+                    
+                    <!-- 钓鱼场景 -->
+                    <div class="relative h-80 rounded-lg mb-6 overflow-hidden" id="fishing-scene">
+                        <!-- 天空 -->
+                        <div class="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-sky-300 to-sky-400"></div>
+                        
+                        <!-- 太阳 -->
+                        <div class="absolute top-4 right-8 w-12 h-12 bg-yellow-300 rounded-full shadow-lg" style="box-shadow: 0 0 30px rgba(255, 200, 0, 0.6);"></div>
+                        
+                        <!-- 云朵 -->
+                        <div class="absolute top-6 left-8 text-4xl opacity-80">☁️</div>
+                        <div class="absolute top-10 left-1/3 text-3xl opacity-60">☁️</div>
+                        
+                        <!-- 远山 -->
+                        <div class="absolute top-16 left-0 right-0 h-8 bg-gradient-to-b from-green-600 to-green-500 opacity-60"></div>
+                        
+                        <!-- 岸边 -->
+                        <div class="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-amber-700 to-amber-600"></div>
+                        
+                        <!-- 草地 -->
+                        <div class="absolute bottom-16 left-0 right-0 h-4 bg-gradient-to-t from-green-500 to-green-400"></div>
+                        
+                        <!-- 水面 -->
+                        <div class="absolute top-20 left-0 right-0 bottom-16 bg-gradient-to-b from-blue-400 via-blue-500 to-blue-600">
+                            <!-- 水波纹 -->
+                            <div class="absolute inset-0 opacity-30">
+                                <div class="water-wave absolute w-full h-2 bg-white/20 rounded-full" style="top: 20%; animation: wave 3s ease-in-out infinite;"></div>
+                                <div class="water-wave absolute w-full h-2 bg-white/20 rounded-full" style="top: 40%; animation: wave 3s ease-in-out infinite 0.5s;"></div>
+                                <div class="water-wave absolute w-full h-2 bg-white/20 rounded-full" style="top: 60%; animation: wave 3s ease-in-out infinite 1s;"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 鱼竿 -->
+                        <div id="fishing-rod" class="absolute bottom-20 left-1/2 transform -translate-x-1/2 origin-bottom transition-transform duration-300" style="transform: rotate(0deg);">
+                            <!-- 竿身 -->
+                            <div class="relative">
+                                <div class="w-2 h-32 bg-gradient-to-t from-amber-800 to-amber-600 rounded-full transform -rotate-12 origin-bottom"></div>
+                                <!-- 卷线器 -->
+                                <div class="absolute bottom-4 -left-3 w-6 h-6 bg-gray-600 rounded-full border-2 border-gray-500"></div>
+                                <!-- 鱼线 -->
+                                <div id="fishing-line" class="absolute top-0 left-1/2 transform -translate-x-1/2 w-0.5 bg-gray-300 transition-all duration-500" style="height: 0px;"></div>
+                                <!-- 鱼钩 -->
+                                <div id="fish-hook" class="absolute left-1/2 transform -translate-x-1/2 transition-all duration-500" style="top: 0px; opacity: 0;">
+                                    <div class="text-2xl">🪝</div>
+                                    <div id="current-bait" class="text-xl"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 水中的鱼 -->
+                        <div id="fish-container" class="absolute inset-0 pointer-events-none">
+                            <!-- 鱼会在这里动态显示 -->
+                        </div>
+                        
+                        <!-- 浮标 -->
+                        <div id="float" class="absolute left-1/2 transform -translate-x-1/2 transition-all duration-500" style="top: 50%; opacity: 0;">
+                            <div class="text-3xl">🔴</div>
+                        </div>
+                        
+                        <!-- 状态提示 -->
+                        <div id="fishing-status" class="absolute top-2 left-1/2 transform -translate-x-1/2 bg-black/50 px-4 py-2 rounded-full text-sm">
+                            准备钓鱼
+                        </div>
+                    </div>
+                    
+                    <!-- 操作按钮 -->
+                    <div class="flex justify-center gap-4 mb-6">
+                        <button id="cast-button" class="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-cyan-600 hover:to-blue-500 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105">
+                            🎣 甩竿
+                        </button>
+                        <button id="reel-button" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-emerald-600 hover:to-green-500 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 opacity-50 cursor-not-allowed" disabled>
+                            🔄 收线
+                        </button>
+                    </div>
+                    
+                    <!-- 操作提示 -->
+                    <div class="text-sm text-gray-400 mb-4">
+                        <p>💡 提示：点击"甩竿"按钮，然后等待鱼上钩，当浮标剧烈晃动时点击"收线"！</p>
+                    </div>
+                    
+                    <div id="fishing-result" class="mt-4 hidden">
+                        <!-- 结果将在这里显示 -->
+                    </div>
+                </div>
+                
+                <style>
+                    @keyframes wave {
+                        0%, 100% { transform: translateX(-10px); }
+                        50% { transform: translateX(10px); }
+                    }
+                    
+                    @keyframes float-bob {
+                        0%, 100% { transform: translateX(-50%) translateY(0); }
+                        50% { transform: translateX(-50%) translateY(-5px); }
+                    }
+                    
+                    @keyframes float-bite {
+                        0%, 100% { transform: translateX(-50%) translateY(0); }
+                        25% { transform: translateX(-50%) translateY(-10px); }
+                        75% { transform: translateX(-50%) translateY(5px); }
+                    }
+                    
+                    .float-bobbing {
+                        animation: float-bob 2s ease-in-out infinite;
+                    }
+                    
+                    .float-biting {
+                        animation: float-bite 0.3s ease-in-out infinite;
+                    }
+                    
+                    .bait-btn.selected {
+                        background: linear-gradient(135deg, #3b82f6, #06b6d4);
+                        transform: scale(1.1);
+                    }
+                    
+                    #fishing-rod.casting {
+                        animation: cast-rod 0.5s ease-out;
+                    }
+                    
+                    @keyframes cast-rod {
+                        0% { transform: rotate(0deg); }
+                        50% { transform: rotate(-60deg); }
+                        100% { transform: rotate(-10deg); }
+                    }
+                </style>
+            `;
+        }
+        
+        // 抓娃娃内容
+        function getClawMachineContent() {
+            return `
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold mb-8">🧸 抓娃娃 🧸</h2>
+                    <p class="text-gray-300 mb-8">操控爪子，抓住你的心仪推荐！</p>
+                    
+                    <div class="relative h-64 bg-gradient-to-b from-pink-200 to-pink-400 rounded-lg mb-8 overflow-hidden">
+                        <div id="claw" class="absolute top-0 left-1/2 transform -translate-x-1/2 transition-all duration-500">
+                            <div class="text-4xl">🤖</div>
+                        </div>
+                        <div id="toys-container" class="absolute bottom-0 left-0 right-0 h-32 flex justify-around items-end">
+                            <div class="text-4xl">🎁</div>
+                            <div class="text-4xl">🧸</div>
+                            <div class="text-4xl">🎀</div>
+                            <div class="text-4xl">💝</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-center space-x-4 mb-4">
+                        <button id="left-button" class="bg-gray-700 hover:bg-gray-600 text-white p-4 rounded-full">
+                            <i class="fa fa-arrow-left"></i>
+                        </button>
+                        <button id="grab-button" class="bg-gradient-to-r from-pink-500 to-rose-600 hover:from-rose-600 hover:to-pink-500 text-white font-bold py-3 px-8 rounded-full transition-all duration-300">
+                            🤏 抓取
+                        </button>
+                        <button id="right-button" class="bg-gray-700 hover:bg-gray-600 text-white p-4 rounded-full">
+                            <i class="fa fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    
+                    <div id="claw-result" class="mt-8 hidden">
+                        <!-- 结果将在这里显示 -->
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 扭蛋内容
+        function getGashaponContent() {
+            return `
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold mb-8">🥚 扭蛋 🥚</h2>
+                    <p class="text-gray-300 mb-8">扭动把手，惊喜蛋里藏着你的专属推荐！</p>
+                    
+                    <div class="relative h-64 bg-gradient-to-b from-purple-200 to-purple-400 rounded-lg mb-8 overflow-hidden flex items-center justify-center">
+                        <div id="gashapon-machine" class="text-center">
+                            <div class="text-8xl mb-4">🥚</div>
+                            <div class="text-2xl">扭蛋机</div>
+                        </div>
+                    </div>
+                    
+                    <button id="twist-button" class="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-indigo-600 hover:to-purple-500 text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105">
+                        🔄 扭动把手
+                    </button>
+                    
+                    <div id="gashapon-result" class="mt-8 hidden">
+                        <!-- 结果将在这里显示 -->
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 初始化游戏
+        function initGame(gameType) {
+            switch(gameType) {
+                case 'slot':
+                    initSlotMachine();
+                    break;
+                case 'fishing':
+                    initFishing();
+                    break;
+                case 'claw':
+                    initClawMachine();
+                    break;
+                case 'gashapon':
+                    initGashapon();
+                    break;
+            }
+        }
+        
+        // 初始化老虎机
+        function initSlotMachine() {
+            const spinButton = document.getElementById('spin-button');
+            const leverStick = document.getElementById('lever-stick');
+            const leverHandle = document.getElementById('lever-handle');
+            const reel1 = document.getElementById('reel1');
+            const reel2 = document.getElementById('reel2');
+            const reel3 = document.getElementById('reel3');
+            const slotResult = document.getElementById('slot-result');
+            
+            const icons = ['🎬', '🎭', '🌟', '🎥', '🎪', '🎨', '📺', '�'];
+            let isSpinning = false;
+            
+            // 拉杆点击事件
+            if (leverHandle) {
+                leverHandle.addEventListener('click', function() {
+                    if (!isSpinning) {
+                        startSpin();
+                    }
+                });
+            }
+            
+            // 按钮点击事件
+            spinButton.addEventListener('click', function() {
+                if (!isSpinning) {
+                    startSpin();
+                }
+            });
+            
+            function startSpin() {
+                isSpinning = true;
+                spinButton.disabled = true;
+                spinButton.innerHTML = '🎲 转动中...';
+                slotResult.classList.add('hidden');
+                
+                // 拉杆动画
+                if (leverStick) {
+                    leverStick.classList.add('pulled');
+                    setTimeout(() => {
+                        leverStick.classList.remove('pulled');
+                    }, 500);
+                }
+                
+                // 准备转轮内容
+                const reelItems = 20;
+                let reel1Items = '';
+                let reel2Items = '';
+                let reel3Items = '';
+                
+                for (let i = 0; i < reelItems; i++) {
+                    reel1Items += `<div class="slot-item h-28 flex items-center justify-center text-4xl">${icons[Math.floor(Math.random() * icons.length)]}</div>`;
+                    reel2Items += `<div class="slot-item h-28 flex items-center justify-center text-4xl">${icons[Math.floor(Math.random() * icons.length)]}</div>`;
+                    reel3Items += `<div class="slot-item h-28 flex items-center justify-center text-4xl">${icons[Math.floor(Math.random() * icons.length)]}</div>`;
+                }
+                
+                reel1.innerHTML = reel1Items;
+                reel2.innerHTML = reel2Items;
+                reel3.innerHTML = reel3Items;
+                
+                // 开始转动动画
+                let position1 = 0;
+                let position2 = 0;
+                let position3 = 0;
+                
+                const speed1 = 30;
+                const speed2 = 35;
+                const speed3 = 40;
+                
+                const stopTime1 = 2000;
+                const stopTime2 = 2500;
+                const stopTime3 = 3000;
+                
+                // 转轮1
+                const interval1 = setInterval(() => {
+                    position1 += 28;
+                    if (position1 >= reelItems * 28) {
+                        position1 = 0;
+                    }
+                    reel1.style.transform = `translateY(-${position1}px)`;
+                }, speed1);
+                
+                // 转轮2
+                const interval2 = setInterval(() => {
+                    position2 += 28;
+                    if (position2 >= reelItems * 28) {
+                        position2 = 0;
+                    }
+                    reel2.style.transform = `translateY(-${position2}px)`;
+                }, speed2);
+                
+                // 转轮3
+                const interval3 = setInterval(() => {
+                    position3 += 28;
+                    if (position3 >= reelItems * 28) {
+                        position3 = 0;
+                    }
+                    reel3.style.transform = `translateY(-${position3}px)`;
+                }, speed3);
+                
+                // 停止转轮1
+                setTimeout(() => {
+                    clearInterval(interval1);
+                    const finalPos1 = Math.floor(Math.random() * reelItems) * 28;
+                    reel1.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    reel1.style.transform = `translateY(-${finalPos1}px)`;
+                }, stopTime1);
+                
+                // 停止转轮2
+                setTimeout(() => {
+                    clearInterval(interval2);
+                    const finalPos2 = Math.floor(Math.random() * reelItems) * 28;
+                    reel2.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    reel2.style.transform = `translateY(-${finalPos2}px)`;
+                }, stopTime2);
+                
+                // 停止转轮3并显示结果
+                setTimeout(() => {
+                    clearInterval(interval3);
+                    const finalPos3 = Math.floor(Math.random() * reelItems) * 28;
+                    reel3.style.transition = 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    reel3.style.transform = `translateY(-${finalPos3}px)`;
+                    
+                    // 显示结果
+                    setTimeout(() => {
+                        const movie = getRandomMovie();
+                        showResult(slotResult, movie);
+                        
+                        spinButton.disabled = false;
+                        spinButton.innerHTML = '🎲 拉动拉杆';
+                        isSpinning = false;
+                    }, 500);
+                }, stopTime3);
+            }
+        }
+        
+        // 初始化钓鱼
+        function initFishing() {
+            const castButton = document.getElementById('cast-button');
+            const reelButton = document.getElementById('reel-button');
+            const fishingResult = document.getElementById('fishing-result');
+            const fishingRod = document.getElementById('fishing-rod');
+            const fishingLine = document.getElementById('fishing-line');
+            const fishHook = document.getElementById('fish-hook');
+            const currentBait = document.getElementById('current-bait');
+            const floatElement = document.getElementById('float');
+            const fishingStatus = document.getElementById('fishing-status');
+            const baitButtons = document.querySelectorAll('.bait-btn');
+            
+            let selectedBait = null;
+            let isFishing = false;
+            let fishBiting = false;
+            let biteTimeout = null;
+            let catchTimeout = null;
+            
+            // 鱼饵选择
+            baitButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    baitButtons.forEach(b => b.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedBait = this.getAttribute('data-bait');
+                    
+                    const baitEmojis = {
+                        worm: '🪱',
+                        fish: '🐟',
+                        shrimp: '🦐',
+                        corn: '🌽'
+                    };
+                    
+                    currentBait.textContent = baitEmojis[selectedBait];
+                    fishingStatus.textContent = `已选择${this.textContent.trim()}`;
+                });
+            });
+            
+            // 甩竿
+            castButton.addEventListener('click', function() {
+                if (!selectedBait) {
+                    fishingStatus.textContent = '请先选择鱼饵！';
+                    return;
+                }
+                
+                if (isFishing) return;
+                
+                isFishing = true;
+                fishBiting = false;
+                fishingResult.classList.add('hidden');
+                
+                // 禁用按钮
+                castButton.disabled = true;
+                castButton.classList.add('opacity-50', 'cursor-not-allowed');
+                
+                // 甩竿动画
+                fishingRod.classList.add('casting');
+                fishingStatus.textContent = '甩竿中...';
+                
+                setTimeout(() => {
+                    fishingRod.classList.remove('casting');
+                    fishingRod.style.transform = 'rotate(-10deg)';
+                    
+                    // 显示鱼线和鱼钩
+                    fishingLine.style.height = '100px';
+                    fishHook.style.top = '100px';
+                    fishHook.style.opacity = '1';
+                    
+                    // 显示浮标
+                    floatElement.style.opacity = '1';
+                    floatElement.style.top = '40%';
+                    floatElement.classList.add('float-bobbing');
+                    
+                    fishingStatus.textContent = '等待鱼上钩...';
+                    
+                    // 随机时间后鱼上钩
+                    const waitTime = 3000 + Math.random() * 5000;
+                    
+                    biteTimeout = setTimeout(() => {
+                        // 鱼上钩
+                        fishBiting = true;
+                        floatElement.classList.remove('float-bobbing');
+                        floatElement.classList.add('float-biting');
+                        fishingStatus.textContent = '🐟 有鱼上钩了！快收线！';
+                        
+                        // 启用收线按钮
+                        reelButton.disabled = false;
+                        reelButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                        
+                        // 3秒内不收线，鱼会跑掉
+                        catchTimeout = setTimeout(() => {
+                            if (fishBiting) {
+                                fishEscaped();
+                            }
+                        }, 3000);
+                    }, waitTime);
+                }, 500);
+            });
+            
+            // 收线
+            reelButton.addEventListener('click', function() {
+                if (!fishBiting) return;
+                
+                clearTimeout(catchTimeout);
+                
+                // 收线动画
+                fishingStatus.textContent = '收线中...';
+                floatElement.classList.remove('float-biting');
+                floatElement.style.opacity = '0';
+                
+                // 收起鱼线
+                fishingLine.style.height = '0px';
+                fishHook.style.opacity = '0';
+                
+                setTimeout(() => {
+                    // 成功钓到
+                    const success = Math.random() > 0.2;
+                    
+                    if (success) {
+                        const movie = getRandomMovie();
+                        fishingStatus.textContent = '🎉 钓到了！';
+                        showResult(fishingResult, movie);
+                    } else {
+                        fishingStatus.textContent = '😅 鱼跑了...';
+                        fishingResult.innerHTML = '<div class="text-center"><p class="text-xl text-gray-300">差一点就钓到了，再试一次吧！</p></div>';
+                        fishingResult.classList.remove('hidden');
+                    }
+                    
+                    resetFishing();
+                }, 1000);
+            });
+            
+            // 鱼跑了
+            function fishEscaped() {
+                fishingStatus.textContent = '😢 鱼跑了...';
+                floatElement.classList.remove('float-biting');
+                floatElement.style.opacity = '0';
+                fishingLine.style.height = '0px';
+                fishHook.style.opacity = '0';
+                
+                fishingResult.innerHTML = '<div class="text-center"><p class="text-xl text-gray-300">动作太慢了，鱼跑掉了！</p></div>';
+                fishingResult.classList.remove('hidden');
+                
+                resetFishing();
+            }
+            
+            // 重置钓鱼状态
+            function resetFishing() {
+                isFishing = false;
+                fishBiting = false;
+                
+                clearTimeout(biteTimeout);
+                clearTimeout(catchTimeout);
+                
+                fishingRod.style.transform = 'rotate(0deg)';
+                
+                castButton.disabled = false;
+                castButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                
+                reelButton.disabled = true;
+                reelButton.classList.add('opacity-50', 'cursor-not-allowed');
+                
+                setTimeout(() => {
+                    fishingStatus.textContent = '准备钓鱼';
+                }, 2000);
+            }
+        }
+        
+        // 初始化抓娃娃
+        function initClawMachine() {
+            const claw = document.getElementById('claw');
+            const leftButton = document.getElementById('left-button');
+            const rightButton = document.getElementById('right-button');
+            const grabButton = document.getElementById('grab-button');
+            const clawResult = document.getElementById('claw-result');
+            
+            let clawPosition = 50;
+            
+            leftButton.addEventListener('click', function() {
+                clawPosition = Math.max(10, clawPosition - 10);
+                claw.style.left = clawPosition + '%';
+            });
+            
+            rightButton.addEventListener('click', function() {
+                clawPosition = Math.min(90, clawPosition + 10);
+                claw.style.left = clawPosition + '%';
+            });
+            
+            grabButton.addEventListener('click', function() {
+                grabButton.disabled = true;
+                grabButton.innerHTML = '🤏 抓取中...';
+                clawResult.classList.add('hidden');
+                
+                // 抓取动画
+                claw.innerHTML = '<div class="text-4xl transform rotate-180">🤖</div>';
+                
+                setTimeout(() => {
+                    const success = Math.random() > 0.4;
+                    
+                    if (success) {
+                        const movie = getRandomMovie();
+                        claw.innerHTML = '<div class="text-4xl">🤖</div><div class="text-2xl">🎁</div>';
+                        showResult(clawResult, movie);
+                    } else {
+                        claw.innerHTML = '<div class="text-4xl">🤖</div>';
+                        clawResult.innerHTML = '<div class="text-center"><p class="text-xl text-gray-300">没抓到，再试一次吧！</p></div>';
+                        clawResult.classList.remove('hidden');
+                    }
+                    
+                    grabButton.disabled = false;
+                    grabButton.innerHTML = '🤏 抓取';
+                }, 1500);
+            });
+        }
+        
+        // 初始化扭蛋
+        function initGashapon() {
+            const twistButton = document.getElementById('twist-button');
+            const gashaponMachine = document.getElementById('gashapon-machine');
+            const gashaponResult = document.getElementById('gashapon-result');
+            
+            twistButton.addEventListener('click', function() {
+                twistButton.disabled = true;
+                twistButton.innerHTML = '🔄 扭动中...';
+                gashaponResult.classList.add('hidden');
+                
+                // 扭动动画
+                gashaponMachine.innerHTML = '<div class="text-8xl mb-4 animate-spin-slow">🥚</div><div class="text-2xl">扭动中...</div>';
+                
+                setTimeout(() => {
+                    const movie = getRandomMovie();
+                    gashaponMachine.innerHTML = '<div class="text-8xl mb-4 animate-bounce">🎁</div><div class="text-2xl">打开惊喜！</div>';
+                    showResult(gashaponResult, movie);
+                    
+                    twistButton.disabled = false;
+                    twistButton.innerHTML = '🔄 扭动把手';
+                }, 2000);
+            });
+        }
+        
+        // 显示结果
+        function showResult(container, movie) {
+            if (!movie) {
+                container.innerHTML = `
+                    <div class="glass rounded-xl p-6 max-w-md mx-auto">
+                        <h3 class="text-2xl font-bold mb-4">😅 没有找到符合条件的影片</h3>
+                        <p class="text-gray-300 mb-4">当前筛选条件下没有影片，请尝试调整筛选条件或清除筛选后重试。</p>
+                        <div class="mt-4 flex justify-center space-x-4">
+                            <button onclick="playAgain()" class="bg-primary hover:bg-secondary text-white px-6 py-2 rounded-full transition-colors">
+                                再试一次
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="glass rounded-xl p-6 max-w-md mx-auto">
+                        <h3 class="text-2xl font-bold mb-4">🎉 恭喜你获得了推荐！</h3>
+                        <div class="flex items-start space-x-4">
+                            <img src="${movie.poster}" alt="${movie.title}" class="w-24 h-32 object-cover rounded-lg">
+                            <div class="flex-1 text-left">
+                                <h4 class="text-xl font-bold mb-2">${movie.title}</h4>
+                                <div class="flex items-center mb-2">
+                                    <i class="fa fa-star text-yellow-400 mr-1"></i>
+                                    <span>${movie.rating}</span>
+                                    <span class="mx-2">|</span>
+                                    <span>${movie.year}</span>
+                                </div>
+                                <p class="text-sm text-gray-300 mb-2">${movie.genre}</p>
+                                <p class="text-sm text-gray-400">${movie.description.substring(0, 50)}...</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-center space-x-4">
+                            <button onclick="window.location.href='browse.html'" class="bg-primary hover:bg-secondary text-white px-6 py-2 rounded-full transition-colors">
+                                查看详情
+                            </button>
+                            <button onclick="playAgain()" class="glass hover:bg-white/20 text-white px-6 py-2 rounded-full transition-colors">
+                                再玩一次
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            container.classList.remove('hidden');
+        }
+        
+        // 再玩一次
+        function playAgain() {
+            const gameModal = document.getElementById('game-modal');
+            gameModal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    </script>
+
+    <!-- TMDb Attribution -->
+    <footer class="text-center py-4 text-gray-500 text-sm">
+        <p>本产品使用 TMDb API，但未经 TMDb 认可或认证。</p>
+        <p class="mt-1">© 2025 MoodChips - 基于心情的影视剧推荐 | 个人学习/非商业用途</p>
+    </footer>
+
+</body>
+</html>
